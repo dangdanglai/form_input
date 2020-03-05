@@ -1,9 +1,6 @@
 import javax.swing.*;
 import javax.swing.filechooser.FileSystemView;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.Arrays;
 
 class Main_form {
     public static final JTextArea txtFileInput = new JTextArea();
@@ -15,6 +12,9 @@ class Main_form {
     public static final  JTextField vlAddress = new JTextField(20);
     public static final  JTextField vlDate = new JTextField(20);
     public static final  JTextField txtResult = new JTextField(20);
+    public static  String cachePathInput = "";
+    public static  String cachePathTemplate = "";
+    public static  String cachePathOutput = "";
 
 
     public static void main(String[] args) {
@@ -29,52 +29,72 @@ class Main_form {
         frame.setVisible(true);
     }
 
-    public static File[] getInputFile(){
-        File[] files;
-
-        JFileChooser jfc = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
-        if (ckbIFA.isSelected()){
-            jfc.setCurrentDirectory(new File("/Users/nguyenbaolam/Downloads/Safari Download/Copy File/Input"));
-        }
-
+    public static File[] getMultiFiles(JFileChooser jfc){
         jfc.setDialogTitle("Multiple file and directory selection:");
         jfc.setMultiSelectionEnabled(true);
         jfc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 
         int returnValue = jfc.showOpenDialog(null);
         if (returnValue == JFileChooser.APPROVE_OPTION) {
-            files = jfc.getSelectedFiles();
+            File[] files = jfc.getSelectedFiles();
             return files;
 
         }else{
             File[] files1 = new File[0];
             return files1;
         }
-        
     }
 
+
+    public static File[] getOutputFile(){
+        File[] files;
+
+        JFileChooser jfc = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
+        jfc.setCurrentDirectory(new File(cachePathOutput));
+        files = getMultiFiles(jfc);
+
+        for (File file : files){
+            cachePathOutput = file.getPath();
+        }
+        return files;
+
+    }
+
+
+    public static File[] getInputFile(){
+        File[] files;
+
+        JFileChooser jfc = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
+        jfc.setCurrentDirectory(new File(cachePathInput));
+        if (ckbIFA.isSelected()){
+            jfc.setCurrentDirectory(new File("/Users/nguyenbaolam/Downloads/Safari Download/Copy File/Input"));
+        }
+
+        files = getMultiFiles(jfc);
+
+        for (File file : files){
+            cachePathInput = file.getPath();
+        }
+        return files;
+        
+    }
 
     public static File[] getTemplateFile(){
         File[] files;
 
         JFileChooser jfc = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
+        jfc.setCurrentDirectory(new File(cachePathTemplate));
         if (ckbIFA.isSelected()){
             jfc.setCurrentDirectory(new File("/Users/nguyenbaolam/Downloads/Safari Download/Copy File/Template"));
         }
 
-        jfc.setDialogTitle("Multiple file and directory selection:");
-        jfc.setMultiSelectionEnabled(true);
-        jfc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        files = getMultiFiles(jfc);
 
-        int returnValue = jfc.showOpenDialog(null);
-        if (returnValue == JFileChooser.APPROVE_OPTION) {
-            files = jfc.getSelectedFiles();
-            return files;
 
-        }else{
-            File[] files1 = new File[0];
-            return files1;
+        for (File file : files){
+            cachePathTemplate = file.getPath();
         }
+        return files;
 
     }
 
@@ -127,7 +147,7 @@ class Main_form {
         ckbIFA.setBounds(200,110,100,25);
         panel.add(ckbIFA);
 
-        ckbIFC.setBounds(260,110,100,25);
+        ckbIFC.setBounds(360,110,100,25);
         panel.add(ckbIFC);
 
         vlProject.setBounds(200,20,620,25);
@@ -186,7 +206,7 @@ class Main_form {
          });
 
          btnLocation.addActionListener(e -> {
-             File[] file_input = getInputFile();
+             File[] file_input = getOutputFile();
              vlOutputLocation.setText("");
              for (File file : file_input) {
                  vlOutputLocation.setText(file.getPath());

@@ -1,12 +1,10 @@
 import java.io.*;
-
 import org.apache.poi.hssf.usermodel.*;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 
-import java.math.BigDecimal;
-import java.text.DecimalFormat;
+import static java.lang.Math.abs;
 
 public class Process_Excel {
 
@@ -20,7 +18,6 @@ public class Process_Excel {
     }
 
     public  StringBuffer readCsv(String path) throws IOException {
-//        File file=new File("/Users/nguyenbaolam/Downloads/Safari Download/Copy File/Input/01_Material_List (steel).csv");
         File file=new File(path);
         FileReader fr=new FileReader(file);
             BufferedReader br=new BufferedReader(fr);
@@ -35,64 +32,50 @@ public class Process_Excel {
             return sb;
     }
 
-    public  void IFA_type1(String path_input, String path_template, String PjNumber, String Address, String Date, String path_output) throws IOException {
+    private void replaceSingleCellValue(Cell cell, String value, String target, String replace){
+        cell.setCellValue(value.replace(target, replace));
+    }
+
+    private void setInfoOutput(HSSFSheet sheet, String find, String replace, int startRow, int endRow){
+        for (int r = startRow; r < endRow; r++){
+            Row row = sheet.getRow(r);
+            for (int i = 0; i < row.getPhysicalNumberOfCells(); i++){
+                Cell cell = row.getCell(i);
+                if (cell.toString().contains(find)){
+                    replaceSingleCellValue(cell, cell.getStringCellValue(), find, replace);
+                }
+            }
+        }
+    }
+
+    private String getOutputFileName(String path_template,String path_output,  String[] find, String[] replace){
         String OutputFileName = (new File(path_template)).getName();
-        OutputFileName = OutputFileName.replace("J-XXX",PjNumber);
+        for (int i=0; i<find.length; i++){
+            OutputFileName = OutputFileName.replace(find[i],replace[i]);
+        }
+
         String OutputDic = path_output + "/" + OutputFileName;
+        return OutputDic;
+    }
 
-        POIFSFileSystem fs = new POIFSFileSystem(new FileInputStream(path_template));
+    private HSSFWorkbook getWorkbookFromIndex(String path) throws IOException {
+        POIFSFileSystem fs = new POIFSFileSystem(new FileInputStream(path));
         HSSFWorkbook wb = new HSSFWorkbook(fs);
-        HSSFSheet sheet = wb.getSheetAt(0);
-//        HSSFRow row;
-//        HSSFCell cell;
+        return  wb;
+    }
 
-//        int rows = sheet.getPhysicalNumberOfRows();
-//
-//        int cols = 0; // No of columns
-//        int tmp = 0;
-
-//        for(int i = 0; i < 10 || i < rows; i++) {
-//            row = sheet.getRow(i);
-//            if(row != null) {
-//                tmp = sheet.getRow(i).getPhysicalNumberOfCells();
-//                if(tmp > cols) cols = tmp;
-//            }
-//        }
-        Cell cellPj = sheet.getRow(0).getCell(0);
-        cellPj.setCellValue(cellPj.toString().replace("J-XXX", PjNumber));
-
-        Cell cellAddress = sheet.getRow(1).getCell(0);
-        cellAddress.setCellValue(cellAddress.toString().replace("Project Address", Address));
-
-        Cell cellDate = sheet.getRow(2).getCell(0);
-        cellDate.setCellValue(cellDate.toString().replace("XX.XX.XXXX", Date));
-
-
-
-        StringBuffer sb=readCsv(path_input);
-        String a[] = sb.toString().split("\n");
-        Row row_del = sheet.getRow(6);
+    private void copyCsvSimple(HSSFSheet sheet,String[] a,  int startRow, int startCsv, int endCsv) {
+        Row row_del = sheet.getRow(startRow);
         sheet.removeRow(row_del);
-        for (int r = 4; r < a.length- 1; r++){
-            HSSFRow row_add = sheet.createRow((short)(r + 2));
-
+        for (int r = startCsv; r < endCsv; r++){
+            HSSFRow row_add = sheet.createRow((short)(r + (startRow-startCsv)));
             String b[];
             b = a[r].split(",");
             for (int j = 0; j <= b.length -1; j++){
                 HSSFCell cell_add = row_add.createCell(j);
 
                 if (b[j].trim()!=null ){
-//                    System.out.println(b[j]+"-----"+Convert_Number(b[j]));
                     if (Convert_Number(b[j].trim())){
-//                        HSSFCellStyle cellStyle = wb.createCellStyle();
-//                        cellStyle.setDataFormat(HSSFDataFormat.getBuiltinFormat("#.0"));
-//                        cellStyle.setDataFormat(wb.createDataFormat().getFormat("0.0"));
-//                        cell_add.setCellType(Cell.CELL_TYPE_NUMERIC);
-//                        double f = Double.parseDouble(b[j].trim());
-//                        String rs = String.format("%.2f", new BigDecimal(f));
-//                        cell_add.setCellValue((rs));
-//                        cell_add.setCellValue(Float.parseFloat(b[j].trim()));
-//                        cell_add.setCellStyle(cellStyle);
                         cell_add.setCellValue(b[j].trim());
 
                     }else{
@@ -104,79 +87,39 @@ public class Process_Excel {
                 }
             }
         }
-        FileOutputStream fileOut = new FileOutputStream(OutputDic);
+    }
+
+    private void exportOutput(HSSFWorkbook wb, String path) throws IOException {
+        FileOutputStream fileOut = new FileOutputStream(path);
         wb.write(fileOut);
         fileOut.close();
     }
 
-    public  void clone_row(HSSFWorkbook wb, HSSFSheet sheet, HSSFRow sourceRow, HSSFRow row_add){
+    public  void clone_row( HSSFSheet sheet, HSSFRow sourceRow, HSSFRow row_add){
         for (int i = 0; i < sourceRow.getLastCellNum(); i++) {
-            // Grab a copy of the old/new cell
             HSSFCell oldCell = sourceRow.getCell(i);
             HSSFCell newCell = row_add.createCell(i);
 
-            // If the old cell is null jump to next cell
             if (oldCell == null) {
 //                newCell = null;
                 continue;
             }
 
-            // Copy style from old cell and apply to new cell
-            HSSFCellStyle newCellStyle = wb.createCellStyle();
-//            newCellStyle.cloneStyleFrom(oldCell.getCellStyle());
-//            newCell.setCellStyle(newCellStyle);
             newCell.setCellStyle(oldCell.getCellStyle());
 
-            // If there is a cell comment, copy
             if (oldCell.getCellComment() != null) {
                 newCell.setCellComment(oldCell.getCellComment());
             }
 
-            // If there is a cell hyperlink, copy
             if (oldCell.getHyperlink() != null) {
                 newCell.setHyperlink(oldCell.getHyperlink());
             }
-
-
-
-            // Set the cell data type
             newCell.setCellType(oldCell.getCellType());
-//            HSSFBorderFormatting border = oldCell.getCellStyle().getBorderBottom();
 
-//            newCellStyle.setBorderBottom(oldCell.getCellStyle().getBorderBottom());
-//            newCellStyle.setBorderTop(oldCell.getCellStyle().getBorderTop());
-//            newCellStyle.setBorderRight(oldCell.getCellStyle().getBorderRight());
-//            newCellStyle.setBorderLeft(oldCell.getCellStyle().getBorderLeft());
-
-
-//             Set the cell data value
-//            switch (oldCell.getCellType()) {
-//                case Cell.CELL_TYPE_BLANK:
-//                    newCell.setCellValue(oldCell.getStringCellValue());
-//                    break;
-//                case Cell.CELL_TYPE_BOOLEAN:
-//                    newCell.setCellValue(oldCell.getBooleanCellValue());
-//                    break;
-//                case Cell.CELL_TYPE_ERROR:
-//                    newCell.setCellErrorValue(oldCell.getErrorCellValue());
-//                    break;
-//                case Cell.CELL_TYPE_FORMULA:
-//                    newCell.setCellFormula(oldCell.getCellFormula());
-//                    break;
-//                case Cell.CELL_TYPE_NUMERIC:
-//                    newCell.setCellValue(oldCell.getNumericCellValue());
-//                    break;
-//                case Cell.CELL_TYPE_STRING:
-//                    newCell.setCellValue(oldCell.getRichStringCellValue());
-//                    break;
-//            }
         }
-//        System.out.println(sheet.getNumMergedRegions());
         int numberMergeCell = sheet.getNumMergedRegions();
         for (int i = 0; i < numberMergeCell; i++) {
-//            System.out.println(i);
             CellRangeAddress cellRangeAddress = sheet.getMergedRegion(i);
-//            System.out.println(cellRangeAddress);
             if (cellRangeAddress.getFirstRow() == sourceRow.getRowNum()) {
                 CellRangeAddress newCellRangeAddress = new CellRangeAddress(row_add.getRowNum(),
                         (row_add.getRowNum() +
@@ -190,15 +133,74 @@ public class Process_Excel {
 
     }
 
-    public  void IFA_type2(String path_input, String path_template, String PjNumber, String Address, String Date, String path_output) throws IOException {
-        String OutputFileName = (new File(path_template)).getName();
-        OutputFileName = OutputFileName.replace("J-XXX",PjNumber).replace("Project Address",Address);
-        String OutputDic = path_output + "/" + OutputFileName;
+    private void handleFooter(HSSFSheet sheet, int contentRowLimit, int footerStartRow, int footerEndRow, int csvStart, int csvEnd){
+        int shift_range = (csvEnd - csvStart + 1) - contentRowLimit;
 
-        POIFSFileSystem fs = new POIFSFileSystem(new FileInputStream(path_template));
-        HSSFWorkbook wb = new HSSFWorkbook(fs);
+        if (shift_range < 0){
+
+            for (int j= abs(shift_range); j > 0; j-- ){
+                Row row_del = sheet.getRow(footerStartRow - j);
+                sheet.removeRow(row_del);
+            }
+        }
+
+        sheet.shiftRows(footerStartRow, footerEndRow, shift_range );
+
+        for (HSSFShape shape : sheet.getDrawingPatriarch().getChildren()) {
+            HSSFClientAnchor anchor = (HSSFClientAnchor) shape.getAnchor();
+            if (anchor.getRow1() >= footerStartRow && anchor.getRow1() <= footerEndRow){
+                anchor.setRow1(anchor.getRow1() + shift_range);
+                anchor.setRow2(anchor.getRow2() + shift_range);
+            }
+        }
+
+    }
+
+    private void copyScaleDown( HSSFSheet sheet,int[] cellArray, String[] stringValueArray , int rowIndex){
+            for (int i = 0; i< cellArray.length; i++){
+                Cell cell = sheet.getRow(rowIndex).getCell(cellArray[i]);
+                cell.setCellValue(stringValueArray[i]);
+            }
+    }
+
+    private void copyScaleUp( HSSFSheet sheet,int[] cellArray, String[] stringValueArray , int rowIndex){
+        HSSFRow sourceRow = sheet.getRow((rowIndex-1));
+        HSSFRow row_add = sheet.createRow((short)(rowIndex));
+        clone_row(sheet, sourceRow, row_add);
+        for (int i = 0; i< cellArray.length; i++){
+            Cell cell = sheet.getRow(rowIndex).getCell(cellArray[i]);
+            if (stringValueArray[i].contains("##**--")){
+                cell.setCellType(Cell.CELL_TYPE_FORMULA);
+                cell.setCellFormula(stringValueArray[i].substring(6));
+            }else{
+                cell.setCellValue(stringValueArray[i]);
+            }
+
+        }
+    }
+
+    public  void IFA_type1(String path_input, String path_template, String PjNumber, String Address, String Date, String path_output) throws IOException {
+
+        String OutputDic = getOutputFileName(path_template, path_output, new String[]{"J-XXX"}, new String[]{PjNumber});
+        HSSFWorkbook wb = getWorkbookFromIndex(path_template);
         HSSFSheet sheet = wb.getSheetAt(0);
 
+        setInfoOutput(sheet, "J-XXX", PjNumber, 0,1);
+        setInfoOutput(sheet, "Project Address", Address, 1,2);
+        setInfoOutput(sheet, "XX.XX.XXX", Date, 2,3);
+
+        StringBuffer sb=readCsv(path_input);
+        String a[] = sb.toString().split("\n");
+        copyCsvSimple(sheet, a, 6, 4, a.length );
+        exportOutput(wb, OutputDic);
+    }
+
+    public  void IFA_type2(String path_input, String path_template, String PjNumber, String Address, String Date, String path_output) throws IOException {
+
+        String OutputDic = getOutputFileName(path_template, path_output, new String[]{"J-XXX","Project Address"}, new String[]{PjNumber,Address});
+
+        HSSFWorkbook wb = getWorkbookFromIndex(path_template);
+        HSSFSheet sheet = wb.getSheetAt(0);
 
         Cell cellPj = sheet.getRow(9).getCell(7);
         cellPj.setCellValue(PjNumber);
@@ -209,109 +211,36 @@ public class Process_Excel {
         Cell cellAddress = sheet.getRow(9).getCell(2);
         cellAddress.setCellValue(Address);
 
-
-
         StringBuffer sb=readCsv(path_input);
         String a[] = sb.toString().split("\n");
 
-        if (a.length > 14){
-            sheet.shiftRows(36, 39, a.length  - (35 - 21 ) - 2 );
-            for (HSSFShape shape : sheet.getDrawingPatriarch().getChildren()) {
-                HSSFClientAnchor anchor = (HSSFClientAnchor) shape.getAnchor();
-//                System.out.println(anchor.getRow1());
-//                System.out.println(anchor.getRow2());
-                if (anchor.getRow1() == 38 && anchor.getRow1() == 38){
-                    anchor.setRow1(anchor.getRow1() + a.length  - (35 - 21 )- 2);
-                    anchor.setRow2(anchor.getRow2() + a.length  - (35 - 21 ) -2);
-                }
-
-
-                // if needed you could change column too, using one of these:
-                // anchor.setCol1(newColumnInt)
-                // anchor.setCol1(anchor.getCol1() + moveColsBy)
-
-            }
+        if (a.length > 15){
+            handleFooter(sheet, 15, 36, 39, 1, (a.length-1));
         }
-
-//        HSSFRow sourceRow = sheet.getRow(21);
 
         for (int r = 1; r < a.length; r++){
 
             if ((r+20)>= 35){
-
-                HSSFRow sourceRow = sheet.getRow((r+20-1));
-                HSSFRow row_add = sheet.createRow((short)(r + 20));
-//                HSSFRow row_add = sheet.createRow((short)(34));
-
-                clone_row(wb, sheet, sourceRow, row_add);
-//
                 String b[];
                 b = a[r].split(",");
-                Cell cell0 = sheet.getRow(r+20).getCell(1);
-                Cell cell1 = sheet.getRow(r+20).getCell(2);
-                Cell cell2 = sheet.getRow(r+20).getCell(3);
-                Cell cell3 = sheet.getRow(r+20).getCell(5);
-                Cell cell5 = sheet.getRow(r+20).getCell(11);
-                cell0.setCellValue(b[0]);
-                cell1.setCellValue(b[1]);
-                cell2.setCellValue("1");
-                cell5.setCellValue(b[2]);
-                String formula= "L" + (r+21);
-                cell3.setCellType(Cell.CELL_TYPE_FORMULA);
-                cell3.setCellFormula(formula);
+                int[] cellArray = {1, 2, 3, 5, 11};
+                String[] cellValueArray = {b[0], b[1], "1", "##**--" + "L" + (r+21) ,b[2]};
+                copyScaleUp(sheet, cellArray, cellValueArray, r+20);
 
             }else {
                 String b[];
                 b = a[r].split(",");
-//                for (int i = 0; i < sheet.getRow((r+20)).getLastCellNum(); i++) {
-//                    System.out.println(i);
-//                    System.out.println(sheet.getRow((r+20)).getCell(i));
-//                }
-//
-                Cell cell0 = sheet.getRow(r+20).getCell(1);
-                Cell cell1 = sheet.getRow(r+20).getCell(2);
-                Cell cell2 = sheet.getRow(r+20).getCell(3);
-                Cell cell5 = sheet.getRow((r+20)).getCell(11);
-                cell0.setCellValue(b[0]);
-                cell1.setCellValue(b[1]);
-                cell2.setCellValue("1");
-                cell5.setCellValue(b[2]);
-
-
-            }
-        }
-        int del_row = 21 + a.length;
-
-        if (del_row < 35){
-            for (int x= 0; x < (37 - del_row);x++ ){
-                Row row_del = sheet.getRow(del_row-1 +x);
-                sheet.removeRow(row_del);
-            }
-            sheet.shiftRows(36, 39, -1 *(35 - a.length - 20 + 1) );
-
-            for (HSSFShape shape : sheet.getDrawingPatriarch().getChildren()) {
-                HSSFClientAnchor anchor = (HSSFClientAnchor) shape.getAnchor();
-//                System.out.println(anchor.getRow1());
-//                System.out.println(anchor.getRow2());
-                if (anchor.getRow1() == 38 && anchor.getRow1() == 38){
-                    anchor.setRow1(anchor.getRow1() + -1 *(35 - a.length - 20 + 1));
-                    anchor.setRow2(anchor.getRow2() + -1 *(35 - a.length - 20 + 1));
-                }
-
-
-                // if needed you could change column too, using one of these:
-                // anchor.setCol1(newColumnInt)
-                // anchor.setCol1(anchor.getCol1() + moveColsBy)
-
+                int[] cellArray = {1, 2, 3, 11};
+                String[] cellValueArray = {b[0], b[1], "1", b[2]};
+                copyScaleDown(sheet, cellArray, cellValueArray, r+20);
             }
         }
 
-
-
-//        HSSFFormulaEvaluator.evaluateAllFormulaCells(wb);
-        FileOutputStream fileOut = new FileOutputStream(OutputDic);
-        wb.write(fileOut);
-        fileOut.close();
+        if (a.length < 15){
+            handleFooter(sheet, 15, 36, 39, 1, (a.length -1));
+        }
+        HSSFFormulaEvaluator.evaluateAllFormulaCells(wb);
+        exportOutput(wb, OutputDic);
     }
 
 //    public static void main(String args[]) throws IOException
