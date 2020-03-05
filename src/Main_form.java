@@ -3,6 +3,8 @@ import javax.swing.filechooser.FileSystemView;
 import java.io.File;
 
 class Main_form {
+    public static final  JTextField vlSettingIFA = new JTextField(20);
+    public static final  JTextField vlSettingIFC = new JTextField(20);
     public static final JTextArea txtFileInput = new JTextArea();
     public static final JTextArea txtFileTemplate = new JTextArea();
     public static final  JTextField vlOutputLocation = new JTextField(20);
@@ -11,22 +13,39 @@ class Main_form {
     public static final  JTextField vlProject = new JTextField(20);
     public static final  JTextField vlAddress = new JTextField(20);
     public static final  JTextField vlDate = new JTextField(20);
-    public static final  JTextField txtResult = new JTextField(20);
-    public static  String cachePathInput = "";
-    public static  String cachePathTemplate = "";
-    public static  String cachePathOutput = "";
+    public static final  JLabel lblResult = new JLabel("");
+    public static  String cachePathIFA = "";
+    public static  String cachePathIFC = "";
+
 
 
     public static void main(String[] args) {
 
         JFrame frame = new JFrame("Combine file IFA & IFC");
-        frame.setSize(850, 700);
+        frame.setSize(850, 600);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         JPanel panel = new JPanel();
         frame.add(panel);
         placeComponents(panel);
         frame.setVisible(true);
+    }
+
+    public static String getDirectory(){
+        JFileChooser jfc = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
+        jfc.setDialogTitle("Directory selection:");
+        jfc.setMultiSelectionEnabled(false);
+        jfc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+        int returnValue = jfc.showOpenDialog(null);
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            File file = jfc.getSelectedFile();
+            return file.getPath();
+
+        }else{
+
+            return "";
+        }
     }
 
     public static File[] getMultiFiles(JFileChooser jfc){
@@ -50,31 +69,30 @@ class Main_form {
         File[] files;
 
         JFileChooser jfc = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
-        jfc.setCurrentDirectory(new File(cachePathOutput));
-        files = getMultiFiles(jfc);
 
-        for (File file : files){
-            cachePathOutput = file.getPath();
+        if (ckbIFA.isSelected()){
+            jfc.setCurrentDirectory(new File( cachePathIFA+"/Output"));
         }
+        if (ckbIFC.isSelected()){
+            jfc.setCurrentDirectory(new File( cachePathIFC+"/Output"));
+        }
+        files = getMultiFiles(jfc);
         return files;
 
     }
-
 
     public static File[] getInputFile(){
         File[] files;
 
         JFileChooser jfc = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
-        jfc.setCurrentDirectory(new File(cachePathInput));
         if (ckbIFA.isSelected()){
-            jfc.setCurrentDirectory(new File("/Users/nguyenbaolam/Downloads/Safari Download/Copy File/Input"));
+            jfc.setCurrentDirectory(new File( cachePathIFA+"/Input"));
+        }
+        if (ckbIFC.isSelected()){
+            jfc.setCurrentDirectory(new File( cachePathIFC+"/Input"));
         }
 
         files = getMultiFiles(jfc);
-
-        for (File file : files){
-            cachePathInput = file.getPath();
-        }
         return files;
         
     }
@@ -83,17 +101,14 @@ class Main_form {
         File[] files;
 
         JFileChooser jfc = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
-        jfc.setCurrentDirectory(new File(cachePathTemplate));
         if (ckbIFA.isSelected()){
-            jfc.setCurrentDirectory(new File("/Users/nguyenbaolam/Downloads/Safari Download/Copy File/Template"));
+            jfc.setCurrentDirectory(new File( cachePathIFA+"/Template"));
+        }
+        if (ckbIFC.isSelected()){
+            jfc.setCurrentDirectory(new File( cachePathIFC+"/Template"));
         }
 
         files = getMultiFiles(jfc);
-
-
-        for (File file : files){
-            cachePathTemplate = file.getPath();
-        }
         return files;
 
     }
@@ -131,61 +146,94 @@ class Main_form {
      public static void placeComponents(JPanel panel) {
 
         panel.setLayout(null);
+         JButton btnSettingIfa = new JButton("Setting IFA");
+         btnSettingIfa.setBounds(10, 20, 150, 25);
+         panel.add(btnSettingIfa);
+
+         JButton btnSettingIfc = new JButton("Setting IFC");
+         btnSettingIfc.setBounds(10, 50, 150, 25);
+         panel.add(btnSettingIfc);
+
+         vlSettingIFA.setBounds(200,20,620,25);
+         vlSettingIFA.setEnabled(false);
+         panel.add(vlSettingIFA);
+
+
+         vlSettingIFC.setBounds(200,50,620,25);
+         vlSettingIFC.setEnabled(false);
+         panel.add(vlSettingIFC);
+
         JLabel lblProject = new JLabel("Project Number");
-        lblProject.setBounds(10,20,200,25);
+        lblProject.setBounds(10,80,200,25);
         panel.add(lblProject);
         JLabel lblAddress = new JLabel("Address");
-        lblAddress.setBounds(10,50,200,25);
+        lblAddress.setBounds(10,110,200,25);
         panel.add(lblAddress);
         JLabel lblDate = new JLabel("Date");
-        lblDate.setBounds(10,80,200,25);
+        lblDate.setBounds(10,140,200,25);
         panel.add(lblDate);
         JLabel lblDescription = new JLabel("Description");
-        lblDescription.setBounds(10,110,200,25);
+        lblDescription.setBounds(10,170,200,25);
         panel.add(lblDescription);
 
-        ckbIFA.setBounds(200,110,100,25);
+        ckbIFA.setBounds(200,170,100,25);
         panel.add(ckbIFA);
 
-        ckbIFC.setBounds(360,110,100,25);
+        ckbIFC.setBounds(360,170,100,25);
         panel.add(ckbIFC);
 
-        vlProject.setBounds(200,20,620,25);
+        vlProject.setBounds(200,80,620,25);
         panel.add(vlProject);
 
-        vlAddress.setBounds(200,50,620,25);
+        vlAddress.setBounds(200,110,620,25);
         panel.add(vlAddress);
 
-        vlDate.setBounds(200,80,620,25);
+        vlDate.setBounds(200,140,620,25);
         panel.add(vlDate);
 
-        txtFileInput.setBounds(200, 140, 620, 100);
+        txtFileInput.setBounds(200, 200, 620, 100);
+        txtFileInput.setEnabled(false);
         panel.add(txtFileInput);
 
-        txtFileTemplate.setBounds(200, 245, 620, 100);
+        txtFileTemplate.setBounds(200, 305, 620, 100);
+        txtFileTemplate.setEnabled(false);
         panel.add(txtFileTemplate);
 
-        vlOutputLocation.setBounds(200,350,620,25);
+        vlOutputLocation.setBounds(200,410,620,25);
+        vlOutputLocation.setEnabled(false);
         panel.add(vlOutputLocation);
 
         JButton btnLocation = new JButton("Output location");
-        btnLocation.setBounds(10, 350, 150, 25);
+        btnLocation.setBounds(10, 410, 150, 25);
         panel.add(btnLocation);
 
         JButton btnInput = new JButton("Select file Input");
-        btnInput.setBounds(10, 140, 150, 25);
+        btnInput.setBounds(10, 200, 150, 25);
         panel.add(btnInput);
 
         JButton btnTemplate = new JButton("Select file Template");
-        btnTemplate.setBounds(10, 245, 150, 25);
+        btnTemplate.setBounds(10, 305, 150, 25);
         panel.add(btnTemplate);
 
         JButton btnProcess = new JButton("Process");
-        btnProcess.setBounds(330, 400, 300, 25);
+        btnProcess.setBounds(330, 460, 300, 50);
         panel.add(btnProcess);
 
-         txtResult.setBounds(10, 450, 620, 25);
-         panel.add(txtResult);
+
+         lblResult.setBounds(10, 510, 620, 25);
+         panel.add(lblResult);
+
+         btnSettingIfa.addActionListener(e -> {
+//             File[] file_input = getInputFile();
+             vlSettingIFA.setText(getDirectory());
+             cachePathIFA = vlSettingIFA.getText();
+         });
+
+         btnSettingIfc.addActionListener(e -> {
+//             File[] file_input = getInputFile();
+             vlSettingIFC.setText(getDirectory());
+             cachePathIFC = vlSettingIFC.getText();
+         });
 
         btnInput.addActionListener(e -> {
             File[] file_input = getInputFile();
@@ -216,8 +264,8 @@ class Main_form {
 
          btnProcess.addActionListener(e -> {
              String result = action();
-             txtResult.setText(result);
-             txtResult.setEnabled(false);
+             lblResult.setText(result);
+             lblResult.setEnabled(false);
 
          });
 
