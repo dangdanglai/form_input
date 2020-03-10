@@ -34,12 +34,7 @@ class Main_form {
     };
     public static String[] list_template_IFA = {
             "J-XXX Advance Material list.xls",
-            "J-XXX Project Address Transmittal001.xls",
-            "J-XXX_Delivery List_Rev 0.xls",
-            "J-XXX Project Address Transmittal002.xls",
-            "J-XXX_Material_List_Rev 0.xls",
-            "J-XXX_Assembly_Bolt_List_Rev 0.xls",
-            "J-XXX_Bolt_Summary_Rev 0.xls"
+            "J-XXX Project Address Transmittal001.xls"
     };
 
     public static String[] list_template_IFC = {
@@ -55,7 +50,7 @@ class Main_form {
     public static void main(String[] args) {
 
         JFrame frame = new JFrame("Combine file IFA & IFC");
-        frame.setSize(850, 600);
+        frame.setSize(850, 800);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         JPanel panel = new JPanel();
@@ -98,42 +93,53 @@ class Main_form {
     }
 
     public static List<String> getFileInList(String path, String mode){
-        File folder = new File(path);
-        File[] files = folder.listFiles();
-        List<String> listfile = new ArrayList<String>();
-        for (File f : files)
-        {
-            if (f.isFile()) {
-                switch (mode){
-                    case "inputIFA":
-                        for (String str: list_input_IFA){
-                            if (f.getName().equals(str)){
-                                listfile.add(f.getName());
-                            }
-                        }
-                    case "inputIFC":
-                        for (String str: list_input_IFC){
-                            if (f.getName().equals(str)){
-                                listfile.add(f.getName());
-                            }
-                        }
-                    case "templateIFA":
-                        for (String str: list_template_IFA){
-                            if (f.getName().equals(str)){
-                                listfile.add(f.getName());
-                            }
-                        }
-                    case "templateIFC":
-                        for (String str: list_template_IFC){
-                            if (f.getName().equals(str)){
-                                listfile.add(f.getName());
-                            }
-                        }
-                }
+        try{
+            File folder = new File(path);
+            File[] files = folder.listFiles();
+            int fileCount = folder.list().length;
+            List<String> listfile = new ArrayList<String>();
 
+            if (fileCount == 0){
+                return listfile;
+            }else{
+                for (File f : files)
+                {
+                    if (f.isFile()) {
+                        switch (mode){
+                            case "inputIFA":
+                                for (String str: list_input_IFA){
+                                    if (f.getName().equals(str)){
+                                        listfile.add(f.getName());
+                                    }
+                                }
+                            case "inputIFC":
+                                for (String str: list_input_IFC){
+                                    if (f.getName().equals(str)){
+                                        listfile.add(f.getName());
+                                    }
+                                }
+                            case "templateIFA":
+                                for (String str: list_template_IFA){
+                                    if (f.getName().equals(str)){
+                                        listfile.add(f.getName());
+                                    }
+                                }
+                            case "templateIFC":
+                                for (String str: list_template_IFC){
+                                    if (f.getName().equals(str)){
+                                        listfile.add(f.getName());
+                                    }
+                                }
+                        }
+
+                    }
+                }
+                return listfile;
             }
+        }catch(Exception ex){
+            List<String> listfile1 = new ArrayList<String>();
+            return listfile1;
         }
-        return listfile;
     }
 
 
@@ -168,25 +174,9 @@ class Main_form {
             Process_Excel px = new Process_Excel();
             String[] inputs = txtFileInput.getText().split("\n");
             String[] templates = txtFileTemplate.getText().split("\n");
-            for (int j = 0; j <= inputs.length -1; j++){
-                if (inputs[j].contains("01_Material_List (steel).csv")){
-                    for (int i = 0; i <= templates.length -1; i++){
-                        if (templates[i].contains("J-XXX Advance Material list.xls")){
-                            px.IFA_type1(inputs[j], templates[i], vlProject.getText(), vlAddress.getText(), vlDate.getText(),vlOutputLocation.getText());
-                        }
-                    }
-                }
 
-                if (inputs[j].contains("12_Genis_Transmittal_(layout).csv")){
-                    for (int i = 0; i <= templates.length -1; i++){
-                        if (templates[i].contains("J-XXX Project Address Transmittal001.xls")){
-                            px.IFA_type2(inputs[j], templates[i], vlProject.getText(), vlAddress.getText(), vlDate.getText(),vlOutputLocation.getText());
-                        }
-                    }
-                }
-            }
-
-            return "Sucess";
+            String result = px.IFA_process(vlSettingIFA.getText(), vlSettingIFC.getText(), inputs, templates,vlProject.getText(), vlAddress.getText(),vlDate.getText(),vlOutputLocation.getText() );
+            return result;
 
         }catch(Exception ex){
             return "Fail";
@@ -245,20 +235,20 @@ class Main_form {
         vlDate.setBounds(200,140,620,25);
         panel.add(vlDate);
 
-        txtFileInput.setBounds(200, 200, 620, 100);
+        txtFileInput.setBounds(200, 200, 620, 200);
         txtFileInput.setEnabled(false);
         panel.add(txtFileInput);
 
-        txtFileTemplate.setBounds(200, 305, 620, 100);
+        txtFileTemplate.setBounds(200, 405, 620, 200);
         txtFileTemplate.setEnabled(false);
         panel.add(txtFileTemplate);
 
-        vlOutputLocation.setBounds(200,410,620,25);
+        vlOutputLocation.setBounds(200,610,620,25);
         vlOutputLocation.setEnabled(false);
         panel.add(vlOutputLocation);
 
         JButton btnLocation = new JButton("Output location");
-        btnLocation.setBounds(10, 410, 150, 25);
+        btnLocation.setBounds(10, 610, 150, 25);
         panel.add(btnLocation);
 
         JLabel lblInput = new JLabel("Input files:");
@@ -266,15 +256,15 @@ class Main_form {
         panel.add(lblInput);
 
         JLabel lblTemplate = new JLabel("Template files:");
-        lblTemplate.setBounds(10, 305, 150, 25);
+        lblTemplate.setBounds(10, 405, 150, 25);
         panel.add(lblTemplate);
 
         JButton btnProcess = new JButton("Process");
-        btnProcess.setBounds(330, 460, 300, 50);
+        btnProcess.setBounds(330, 660, 300, 50);
         panel.add(btnProcess);
 
 
-         lblResult.setBounds(10, 510, 620, 25);
+         lblResult.setBounds(10, 710, 620, 25);
          panel.add(lblResult);
 
          btnSettingIfa.addActionListener(e -> {
