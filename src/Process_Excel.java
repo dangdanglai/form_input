@@ -179,7 +179,7 @@ public class Process_Excel {
         }
     }
 
-    public  void IFA_type1(String path_input, String path_template, String PjNumber, String Address, String Date, String path_output) throws IOException {
+    private  void IFA_type1(String path_input, String path_template, String PjNumber, String Address, String Date, String path_output) throws IOException {
 
         String OutputDic = getOutputFileName(path_template, path_output, new String[]{"J-XXX"}, new String[]{PjNumber});
         HSSFWorkbook wb = getWorkbookFromIndex(path_template);
@@ -195,7 +195,7 @@ public class Process_Excel {
         exportOutput(wb, OutputDic);
     }
 
-    public  void IFA_type2(String path_input, String path_template, String PjNumber, String Address, String Date, String path_output) throws IOException {
+    private  void IFA_type2(String path_input, String path_template, String PjNumber, String Address, String Date, String path_output) throws IOException {
 
         String OutputDic = getOutputFileName(path_template, path_output, new String[]{"J-XXX","Project Address"}, new String[]{PjNumber,Address});
 
@@ -242,6 +242,95 @@ public class Process_Excel {
         HSSFFormulaEvaluator.evaluateAllFormulaCells(wb);
         exportOutput(wb, OutputDic);
     }
+
+    public String IFA_process(String pathFolderInput, String pathFolderTemplate, String[] inputs, String[] templates,String PjNumber, String Address, String Date, String path_output ){
+        try{
+
+            for (int j = 0; j <= inputs.length -1; j++){
+                if (inputs[j].contains("01_Material_List (steel).csv")){
+                    for (int i = 0; i <= templates.length -1; i++){
+                        if (templates[i].contains("J-XXX Advance Material list.xls")){
+                            IFA_type1(pathFolderInput +"/"+ inputs[j], pathFolderTemplate+"/"+templates[i], PjNumber, Address, Date,path_output);
+                        }
+                    }
+                }
+
+                if (inputs[j].contains("12_Genis_Transmittal_(layout).csv")){
+                    for (int i = 0; i <= templates.length -1; i++){
+                        if (templates[i].contains("J-XXX Project Address Transmittal001.xls")){
+                            IFA_type2(pathFolderInput +"/"+ inputs[j], pathFolderTemplate+"/"+templates[i], PjNumber, Address, Date,path_output);
+                        }
+                    }
+                }
+            }
+
+            return "Sucess";
+
+        }catch(Exception ex){
+            return "Fail";
+        }
+    }
+
+    private void IFC__rp_Material_List( String path_input, String path_template, String PjNumber, String Address, String Date, String path_output) throws IOException{
+        String OutputDic = getOutputFileName(path_template, path_output, new String[]{"J-XXX"}, new String[]{PjNumber});
+        HSSFWorkbook wb = getWorkbookFromIndex(path_template);
+        HSSFSheet sheet = wb.getSheetAt(0);
+
+        setInfoOutput(sheet, "J-XXX", PjNumber, 0,1);
+        setInfoOutput(sheet, "Address", Address, 1,2);
+        setInfoOutput(sheet, "DD.MM.YYYY", Date, 2,3);
+
+        StringBuffer sb=readCsv(path_input);
+        String a[] = sb.toString().split("\n");
+        copyCsvSimple(sheet, a, 6, 4, a.length );
+        exportOutput(wb, OutputDic);
+    }
+
+    private void IFC_rp_Assembly_Bolt_List(String path_input, String path_template, String PjNumber, String Address, String Date, String path_output) throws IOException {
+        String OutputDic = getOutputFileName(path_template, path_output, new String[]{"J-XXX"}, new String[]{PjNumber});
+        HSSFWorkbook wb = getWorkbookFromIndex(path_template);
+        HSSFSheet sheet = wb.getSheetAt(0);
+
+        setInfoOutput(sheet, "J-XXX", PjNumber, 2,3);
+        setInfoOutput(sheet, "Address", Address, 3,4);
+        setInfoOutput(sheet, "DD.MM.YYYY", Date, 3,4);
+
+        StringBuffer sb=readCsv(path_input);
+        String a[] = sb.toString().split("\n");
+        copyCsvSimple(sheet, a, 8, 7, a.length );
+        exportOutput(wb, OutputDic);
+    }
+
+
+    private void IFC_rp_Bolt_Summary(String path_input, String path_template, String PjNumber, String Address, String Date, String path_output) throws IOException {
+        String OutputDic = getOutputFileName(path_template, path_output, new String[]{"J-XXX"}, new String[]{PjNumber});
+        HSSFWorkbook wb = getWorkbookFromIndex(path_template);
+        HSSFSheet sheet = wb.getSheetAt(0);
+
+        setInfoOutput(sheet, "J-XXX", PjNumber, 3,4);
+        setInfoOutput(sheet, "Address", Address, 4,5);
+        setInfoOutput(sheet, "DD.MM.YYYY", Date, 3,4);
+
+        StringBuffer sb=readCsv(path_input);
+        String a[] = sb.toString().split("\n");
+        int count = 0;
+        int end_row = 0;
+        for (String a_child: a){
+            end_row += 1;
+            if (a_child.equals(" -------------------------------------------------------------------------")){
+                count += 1;
+            }
+            if (count ==4){
+                break;
+            }
+
+        }
+
+        copyCsvSimple(sheet, a, 9, 8, end_row );
+        exportOutput(wb, OutputDic);
+    }
+
+
 
 
 
