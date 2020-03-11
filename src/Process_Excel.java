@@ -319,13 +319,14 @@ public class Process_Excel {
         int count = 0;
         int end_row = 0;
         for (String a_child: a){
-            end_row += 1;
+
             if (a_child.equals(" -------------------------------------------------------------------------")){
                 count += 1;
             }
             if (count ==4){
                 break;
             }
+            end_row += 1;
 
         }
 
@@ -484,23 +485,106 @@ public class Process_Excel {
         HSSFFormulaEvaluator.evaluateAllFormulaCells(wb);
         exportOutput(wb, OutputDic);
     }
-    
-    public static void main(String args[]) throws IOException
-    {
-//        String path_input ="/Users/nguyenbaolam/Downloads/Safari Download/Copy File-2/IFC/Input/07_MCS_(assy)_List.csv";
-        String path_template ="/Users/nguyenbaolam/Downloads/Safari Download/Copy File-2/IFC/Template/J-XXX Project Address Transmittal002.xls";
-        String[] path_input ={
-                "/Users/nguyenbaolam/Downloads/Safari Download/Copy File-2/IFC/Input/12_Genis_Transmittal_(layout).csv",
-                "/Users/nguyenbaolam/Downloads/Safari Download/Copy File-2/IFC/Input/11_Genis_Transmittal_(assy).csv",
-                "/Users/nguyenbaolam/Downloads/Safari Download/Copy File-2/IFC/Input/13_Genis_Transmittal_(single).csv"
-        };
-        String PjNumber = "SHIN";
-        String Address = "ABCDEF";
-        String path_output= "/Users/nguyenbaolam/Desktop";
-        String Date = "10.02.2020";
-        Process_Excel px = new Process_Excel();
-//        px.IFC_Delivery_List_Rev(path_input,  path_template,  PjNumber,  Address,  Date,  path_output);
-        px.IFC_Transmittal002(path_input,  path_template,  PjNumber,  Address,  Date,  path_output);
 
+
+    public String IFC_process(String pathFolderInput, String pathFolderTemplate, String[] inputs, String[] templates,String PjNumber, String Address, String Date, String path_output ){
+        try{
+            String[] path_input = new String[3];
+            for (int j = 0; j <= inputs.length -1; j++){
+                if (inputs[j].contains("01_Material_List (steel).csv")){
+                    for (int i = 0; i <= templates.length -1; i++){
+                        if (templates[i].contains("J-XXX_Material_List_Rev 0.xls")){
+                            IFC__rp_Material_List(pathFolderInput +"/"+ inputs[j], pathFolderTemplate+"/"+templates[i], PjNumber, Address, Date,path_output);
+                        }
+                    }
+                }
+
+                if (inputs[j].contains("05_Assembly_Part_List.csv")){
+                    for (int i = 0; i <= templates.length -1; i++){
+                        if (templates[i].contains("-XXX_Assembly_Bolt_List_Rev 0.xls")){
+                            IFC_rp_Assembly_Bolt_List(pathFolderInput +"/"+ inputs[j], pathFolderTemplate+"/"+templates[i], PjNumber, Address, Date,path_output);
+                        }
+                    }
+                }
+
+                if (inputs[j].contains("04_Bolt_Summary.csv")){
+                    for (int i = 0; i <= templates.length -1; i++){
+                        if (templates[i].contains("J-XXX_Bolt_Summary_Rev 0.xls")){
+                            IFC_rp_Bolt_Summary(pathFolderInput +"/"+ inputs[j], pathFolderTemplate+"/"+templates[i], PjNumber, Address, Date,path_output);
+                        }
+                    }
+                }
+
+                if (inputs[j].contains("07_MCS_(assy)_List.csv")){
+                    for (int i = 0; i <= templates.length -1; i++){
+                        if (templates[i].contains("J-XXX_Delivery List_Rev 0.xls")){
+                            IFC_Delivery_List_Rev(pathFolderInput +"/"+ inputs[j], pathFolderTemplate+"/"+templates[i], PjNumber, Address, Date,path_output);
+                        }
+                    }
+                }
+
+                if (inputs[j].contains("12_Genis_Transmittal_(layout).csv")){
+                    path_input[0] = pathFolderInput +"/"+"12_Genis_Transmittal_(layout).csv";
+                }
+                if (inputs[j].contains("11_Genis_Transmittal_(assy).csv")){
+                    path_input[1] = pathFolderInput +"/"+"11_Genis_Transmittal_(assy).csv";
+                }
+                if (inputs[j].contains("13_Genis_Transmittal_(single).csv")){
+                    path_input[2] = pathFolderInput +"/"+"13_Genis_Transmittal_(single).csv";
+                }
+            }
+
+            for (int i = 0; i <= templates.length -1; i++){
+                if (templates[i].contains("J-XXX Project Address Transmittal002.xls")){
+                    IFC_Transmittal002(path_input, pathFolderTemplate+"/"+templates[i], PjNumber, Address, Date,path_output);
+                }
+            }
+
+            return "Sucess";
+
+        }catch(Exception ex){
+            return ex.toString();
+        }
     }
+
+//    public static void main(String args[]) throws IOException
+//    {
+////        String path_input ="/Users/nguyenbaolam/Downloads/Safari Download/Copy File-2/IFC/Input/07_MCS_(assy)_List.csv";
+////        String path_template ="/Users/nguyenbaolam/Downloads/Safari Download/Copy File-2/IFC/Template/J-XXX Project Address Transmittal002.xls";
+////        String[] path_input ={
+////                "/Users/nguyenbaolam/Downloads/Safari Download/Copy File-2/IFC/Input/12_Genis_Transmittal_(layout).csv",
+////                "/Users/nguyenbaolam/Downloads/Safari Download/Copy File-2/IFC/Input/11_Genis_Transmittal_(assy).csv",
+////                "/Users/nguyenbaolam/Downloads/Safari Download/Copy File-2/IFC/Input/13_Genis_Transmittal_(single).csv"
+////        };
+//        String PjNumber = "SHIN";
+//        String Address = "ABCDEF";
+//        String path_output= "/Users/nguyenbaolam/Desktop/IFC/Output";
+//        String Date = "11.02.2020";
+//        Process_Excel px = new Process_Excel();
+////        px.IFC_Delivery_List_Rev(path_input,  path_template,  PjNumber,  Address,  Date,  path_output);
+////        px.IFC_Transmittal002(path_input,  path_template,  PjNumber,  Address,  Date,  path_output);
+//
+//        String pathFolderInput = "/Users/nguyenbaolam/Desktop/IFC/Input";
+//        String pathFolderTemplate= "/Users/nguyenbaolam/Desktop/IFC/Template";
+//        String[] inputs= {
+//                "01_Material_List (steel).csv",
+//                "05_Assembly_Part_List.csv",
+//                "04_Bolt_Summary.csv",
+//                "07_MCS_(assy)_List.csv",
+//                "13_Genis_Transmittal_(single).csv",
+//                "11_Genis_Transmittal_(assy).csv",
+//                "12_Genis_Transmittal_(layout).csv"
+//        };
+//        String[] templates = {
+//                "J-XXX_Delivery List_Rev 0.xls",
+//                "J-XXX Project Address Transmittal002.xls",
+//                "J-XXX_Material_List_Rev 0.xls",
+//                "J-XXX_Assembly_Bolt_List_Rev 0.xls",
+//                "J-XXX_Bolt_Summary_Rev 0.xls"
+//        };;
+//
+//        String result  = px.IFC_process(pathFolderInput, pathFolderTemplate, inputs, templates,  PjNumber,  Address,  Date,  path_output  );
+//        System.out.println(result);
+//
+//    }
 }

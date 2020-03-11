@@ -105,33 +105,39 @@ class Main_form {
                 for (File f : files)
                 {
                     if (f.isFile()) {
-                        switch (mode){
-                            case "inputIFA":
-                                for (String str: list_input_IFA){
-                                    if (f.getName().equals(str)){
-                                        listfile.add(f.getName());
-                                    }
+                        if (mode.equals("inputIFA")){
+                            for (String str: list_input_IFA){
+                                if (f.getName().equals(str)){
+                                    listfile.add(f.getName());
                                 }
-                            case "inputIFC":
-                                for (String str: list_input_IFC){
-                                    if (f.getName().equals(str)){
-                                        listfile.add(f.getName());
-                                    }
-                                }
-                            case "templateIFA":
-                                for (String str: list_template_IFA){
-                                    if (f.getName().equals(str)){
-                                        listfile.add(f.getName());
-                                    }
-                                }
-                            case "templateIFC":
-                                for (String str: list_template_IFC){
-                                    if (f.getName().equals(str)){
-                                        listfile.add(f.getName());
-                                    }
-                                }
+                            }
                         }
 
+
+                        if (mode.equals("inputIFC")){
+                            for (String str: list_input_IFC){
+                                if (f.getName().equals(str)){
+                                    listfile.add(f.getName());
+                                }
+                            }
+                        }
+
+
+                        if (mode.equals("templateIFA")){
+                            for (String str: list_template_IFA){
+                                if (f.getName().equals(str)){
+                                    listfile.add(f.getName());
+                                }
+                            }
+                        }
+
+                        if (mode.equals("templateIFC")){
+                            for (String str: list_template_IFC){
+                                if (f.getName().equals(str)){
+                                    listfile.add(f.getName());
+                                }
+                            }
+                        }
                     }
                 }
                 return listfile;
@@ -151,48 +157,74 @@ class Main_form {
 
     }
 
-    public static File[] getInputFile(){
-        File[] files;
-
-        JFileChooser jfc = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
-        files = getMultiFiles(jfc);
-        return files;
-        
-    }
-
-    public static File[] getTemplateFile(){
-        File[] files;
-
-        JFileChooser jfc = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
-        files = getMultiFiles(jfc);
-        return files;
-
-    }
 
     public static String action(){
         try{
             Process_Excel px = new Process_Excel();
             String[] inputs = txtFileInput.getText().split("\n");
             String[] templates = txtFileTemplate.getText().split("\n");
-
-            String result = px.IFA_process(vlSettingIFA.getText(), vlSettingIFC.getText(), inputs, templates,vlProject.getText(), vlAddress.getText(),vlDate.getText(),vlOutputLocation.getText() );
-            return result;
+            String final_ = "";
+            if (ckbIFA.isSelected()){
+                String result = px.IFA_process(vlSettingIFA.getText(), vlSettingIFC.getText(), inputs, templates,vlProject.getText(), vlAddress.getText(),vlDate.getText(),vlOutputLocation.getText() );
+                final_ =  result;
+            }
+            if (ckbIFC.isSelected()){
+                String result = px.IFC_process(vlSettingIFA.getText(), vlSettingIFC.getText(), inputs, templates,vlProject.getText(), vlAddress.getText(),vlDate.getText(),vlOutputLocation.getText() );
+                final_ =  result;
+            }
+            return final_;
 
         }catch(Exception ex){
             return "Fail";
         }
     }
 
+    public static void warn() {
+        String mode = "";
+        txtFileTemplate.setText("");
+        if (ckbIFA.isSelected()){
+            mode = "templateIFA";
+        };
+
+        if (ckbIFC.isSelected()){
+            mode = "templateIFC";
+        };
+//        System.out.println(mode);
+        List<String> file_input =  getFileInList(vlSettingIFC.getText(), mode);
+        for (String file : file_input) {
+            txtFileTemplate.append(file + "\n");
+        }
+        txtFileTemplate.setEnabled(false);
+    }
+
+    public static void warn1() {
+        String mode = "";
+        txtFileInput.setText("");
+        if (ckbIFA.isSelected()){
+            mode = "inputIFA";
+        };
+
+        if (ckbIFC.isSelected()){
+            mode = "inputIFC";
+        };
+//        System.out.println(mode);
+        List<String> file_input =  getFileInList(vlSettingIFA.getText(), mode);
+        for (String file : file_input) {
+            txtFileInput.append(file + "\n");
+        }
+        txtFileInput.setEnabled(false);
+    }
+
      public static void placeComponents(JPanel panel) {
 
         panel.setLayout(null);
-         JButton btnSettingIfa = new JButton("Setting Input");
-         btnSettingIfa.setBounds(10, 20, 150, 25);
-         panel.add(btnSettingIfa);
+         JLabel lblSettingIfa = new JLabel("Paste link Input ==>");
+         lblSettingIfa.setBounds(10, 20, 150, 25);
+         panel.add(lblSettingIfa);
 
-         JButton btnSettingIfc = new JButton("Setting Template");
-         btnSettingIfc.setBounds(10, 50, 150, 25);
-         panel.add(btnSettingIfc);
+         JLabel lblSettingIfc = new JLabel("Paste link Template ==>");
+         lblSettingIfc.setBounds(10, 50, 180, 25);
+         panel.add(lblSettingIfc);
 
          vlSettingIFA.setBounds(200,20,620,25);
          vlSettingIFA.setEnabled(true);
@@ -244,7 +276,7 @@ class Main_form {
         panel.add(txtFileTemplate);
 
         vlOutputLocation.setBounds(200,610,620,25);
-        vlOutputLocation.setEnabled(false);
+        vlOutputLocation.setEnabled(true);
         panel.add(vlOutputLocation);
 
         JButton btnLocation = new JButton("Output location");
@@ -267,73 +299,12 @@ class Main_form {
          lblResult.setBounds(10, 710, 620, 25);
          panel.add(lblResult);
 
-         btnSettingIfa.addActionListener(e -> {
-//             File[] file_input = getInputFile();
-             String path = getDirectory();
-             vlSettingIFA.setText(path);
-
-             String mode = "";
-             if (ckbIFA.isSelected()){
-                 mode = "inputIFA";
-             };
-
-             if (ckbIFC.isSelected()){
-                 mode = "inputIFC";
-             };
-
-             List<String> file_input =  getFileInList(path, mode);
-             for (String file : file_input) {
-                 txtFileInput.append(file + "\n");
-             }
-             txtFileInput.setEnabled(false);
-
-         });
-
-         btnSettingIfc.addActionListener(e -> {
-//             File[] file_input = getInputFile();
-             String path = getDirectory();
-             vlSettingIFC.setText(path);
-             String mode = "";
-             if (ckbIFA.isSelected()){
-                 mode = "templateIFA";
-             };
-
-             if (ckbIFC.isSelected()){
-                 mode = "templateIFC";
-             };
-
-             List<String> file_input =  getFileInList(path, mode);
-             for (String file : file_input) {
-                 txtFileTemplate.append(file + "\n");
-             }
-             txtFileTemplate.setEnabled(false);
-
-         });
-
-//        btnInput.addActionListener(e -> {
-//            File[] file_input = getInputFile();
-//            txtFileInput.setText("");
-//            for (File file : file_input) {
-//                txtFileInput.append(file.getName() + "\n");
-//                txtFileInput.setEnabled(false);
-//            }
-//        });
-
-//         btnTemplate.addActionListener(e -> {
-//             File[] file_input = getTemplateFile();
-//             txtFileTemplate.setText("");
-//             for (File file : file_input) {
-//                 txtFileTemplate.append(file.getName() + "\n");
-//                 txtFileTemplate.setEnabled(false);
-//             }
-//         });
-
          btnLocation.addActionListener(e -> {
              File[] file_input = getOutputFile();
              vlOutputLocation.setText("");
              for (File file : file_input) {
                  vlOutputLocation.setText(file.getPath());
-                 vlOutputLocation.setEnabled(false);
+                 vlOutputLocation.setEnabled(true);
              }
          });
 
@@ -344,34 +315,29 @@ class Main_form {
 
          });
 
+         ckbIFA.addActionListener(e ->{
+             warn1();
+             warn();
+         });
+
+         ckbIFC.addActionListener(e ->{
+             warn1();
+             warn();
+         });
+
+
 
          vlSettingIFA.getDocument().addDocumentListener(new DocumentListener() {
              public void changedUpdate(DocumentEvent e) {
-                 warn();
+                 warn1();
              }
              public void removeUpdate(DocumentEvent e) {
-                 warn();
+                 warn1();
              }
              public void insertUpdate(DocumentEvent e) {
-                 warn();
+                 warn1();
              }
 
-             public void warn() {
-                 String mode = "";
-                 if (ckbIFA.isSelected()){
-                     mode = "inputIFA";
-                 };
-
-                 if (ckbIFC.isSelected()){
-                     mode = "inputIFC";
-                 };
-
-                 List<String> file_input =  getFileInList(vlSettingIFA.getText(), mode);
-                 for (String file : file_input) {
-                     txtFileInput.append(file + "\n");
-                 }
-                 txtFileInput.setEnabled(false);
-             }
          });
 
 
@@ -384,23 +350,6 @@ class Main_form {
              }
              public void insertUpdate(DocumentEvent e) {
                  warn();
-             }
-
-             public void warn() {
-                 String mode = "";
-                 if (ckbIFA.isSelected()){
-                     mode = "templateIFA";
-                 };
-
-                 if (ckbIFC.isSelected()){
-                     mode = "templateIFC";
-                 };
-
-                 List<String> file_input =  getFileInList(vlSettingIFC.getText(), mode);
-                 for (String file : file_input) {
-                     txtFileTemplate.append(file + "\n");
-                 }
-                 txtFileTemplate.setEnabled(false);
              }
          });
 
